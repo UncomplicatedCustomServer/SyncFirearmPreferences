@@ -322,6 +322,7 @@
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Enums\SyncPreference.cs" />
+    <Compile Include="Handler.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities.cs" />

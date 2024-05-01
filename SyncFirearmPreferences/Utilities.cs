@@ -6,6 +6,7 @@ using Exiled.API.Structs;
 using Exiled.Loader.GHApi;
 using InventorySystem.Items.Firearms.Attachments;
 using InventorySystem.Items.Firearms.Attachments.Components;
+using InventorySystem.Items.Firearms.BasicMessages;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -126,37 +127,23 @@ namespace SyncFirearmPreferences
 
                 Dictionary<string, List<string>> Data = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(response);
 
+                if (Plugin.CachedPreferences.ContainsKey(player.Id))
+                {
+                    Plugin.CachedPreferences[player.Id] = Data;
+                }
+                else
+                {
+                    Plugin.CachedPreferences.Add(player.Id, Data);
+                }
+
                 if (Data.Count < 1)
                 {
                     response = "{\"status\":404,\"message\":\"No configuration found!\"}";
                     return false;
                 }
 
-                ClearPreferences(player);
+                ClearSyncPreference(Data, player);
 
-                foreach (KeyValuePair<string, List<string>> Entry in Data)
-                {
-                    if (Enum.TryParse(Entry.Key, out FirearmType Firearm))
-                    {
-                        List<AttachmentIdentifier> Attachments = new();
-                        foreach (string Attachment in Entry.Value)
-                        {
-                            if (Enum.TryParse(Attachment, out AttachmentName Name))
-                            {
-                                Attachments.Add(AttachmentIdentifier.Get(Firearm, Name));
-                            } else
-                            {
-                                Log.Error($"Failed to parse the AttchNm {Attachment}");
-                            }
-                        }
-
-                        AddPreference(player, Firearm, Attachments.ToArray());
-                    } 
-                    else
-                    {
-                        Log.Error($"Failed to parse the firearm {Entry.Key}!");
-                    }
-                }
                 return true;
             } 
             else
@@ -164,6 +151,36 @@ namespace SyncFirearmPreferences
                 response = null;
                 Log.Warn("Unable to retrive the data from the server!");
                 return false;
+            }
+        }
+
+        public static void ClearSyncPreference(Dictionary<string, List<string>> Data, Player player)
+        {
+            ClearPreferences(player);
+
+            foreach (KeyValuePair<string, List<string>> Entry in Data)
+            {
+                if (Enum.TryParse(Entry.Key, out FirearmType Firearm))
+                {
+                    List<AttachmentIdentifier> Attachments = new();
+                    foreach (string Attachment in Entry.Value)
+                    {
+                        if (Enum.TryParse(Attachment, out AttachmentName Name))
+                        {
+                            Attachments.Add(AttachmentIdentifier.Get(Firearm, Name));
+                        }
+                        else
+                        {
+                            Log.Error($"Failed to parse the AttchNm {Attachment}");
+                        }
+                    }
+
+                    AddPreference(player, Firearm, Attachments.ToArray());
+                }
+                else
+                {
+                    Log.Error($"Failed to parse the firearm {Entry.Key}!");
+                }
             }
         }
 
@@ -193,7 +210,7 @@ namespace SyncFirearmPreferences
             }
         }
 
-        // Copied from EXILED's Firearm.cs because they are dump
+        // Copied from EXILED's Firearm.cs because they are dumb
         public static void ClearPreferences(Player player)
         {
             foreach (KeyValuePair<FirearmType, AttachmentIdentifier[]> Data in Firearm.PlayerPreferences[player])

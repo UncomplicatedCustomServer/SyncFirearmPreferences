@@ -2,10 +2,8 @@
 using Exiled.API.Features;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
+using PlayerEventSource = Exiled.Events.Handlers.Player;
 
 namespace SyncFirearmPreferences
 {
@@ -25,21 +23,34 @@ namespace SyncFirearmPreferences
 
         public static Dictionary<int, SyncPreference> PlayerPreferences;
 
-        public static Dictionary<int, string> Passwords;
+        internal static Dictionary<int, string> Passwords;
+
+        public static Dictionary<int, Dictionary<string, List<string>>> CachedPreferences;
 
         public static HttpClient HttpClient;
+
+        internal Handler Handler;
 
         public override void OnEnabled()
         {
             PlayerPreferences = new();
             Passwords = new();
+            CachedPreferences = new();
             HttpClient = new();
+
+            Handler = new();
+
+            PlayerEventSource.Spawning += Handler.OnSpawning;
 
             base.OnEnabled();
         }
 
         public override void OnDisabled()
         {
+            PlayerEventSource.Spawning -= Handler.OnSpawning;
+
+            Handler = null;
+
             base.OnDisabled();
         }
     }
